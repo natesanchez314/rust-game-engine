@@ -11,6 +11,7 @@ use state::State;
 
 mod state;
 mod vertex;
+mod texture;
 
 #[cfg_attr(target_arch="wasm32", wasm_bindgen(start))]
 pub async fn run() {

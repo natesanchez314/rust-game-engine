@@ -13,6 +13,7 @@ env_logger = "*"
 log = "*"
 pollster = "*"
 bytemuck = { version = "*", features = [ "derive" ] }
+anyhow = "*"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "*"
