@@ -47,7 +47,8 @@ impl State {
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps.formats.iter()
             .copied()
-            .filter(|f| f.is_srgb())
+            //.filter(|f| f.is_srgb()) // Is this a windows thing? a version thing?
+            .filter(|f| f.describe().srgb)
             .next()
             .unwrap_or(surface_caps.formats[0]);
         let config = wgpu::SurfaceConfiguration {
