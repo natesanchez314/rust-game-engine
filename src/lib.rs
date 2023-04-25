@@ -1,4 +1,3 @@
-use vertex::Vertex;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
