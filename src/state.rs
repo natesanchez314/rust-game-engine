@@ -3,7 +3,7 @@ use winit::{window::Window, event::WindowEvent};
 use bytemuck;
 use image::{self, GenericImageView};
 
-use crate::{vertex::Vertex, texture};
+use crate::{vertex::Vertex, texture, camera::Camera};
 
 pub struct State {
     surface: wgpu::Surface,
@@ -18,6 +18,7 @@ pub struct State {
     num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
     diffuse_texture: texture::Texture,
+    camera: Camera,
 }
 
 impl State {
@@ -28,13 +29,11 @@ impl State {
             dx12_shader_compiler: Default::default(),
         });
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
-        let adapter = instance.request_adapter(
-            &wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            },
-        ).await.unwrap();
+        let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::default(),
+            compatible_surface: Some(&surface),
+            force_fallback_adapter: false,
+        }).await.unwrap();
         let (device, queue) = adapter.request_device(
             &wgpu::DeviceDescriptor {
                 features: wgpu::Features::empty(),
@@ -169,24 +168,30 @@ impl State {
         ];
 
 
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
-        let index_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
 
         //let num_vertices = VERTICES.len() as u32;
         let num_indices = INDICES.len() as u32;
+
+        let camera = Camera {
+            eye: (0.0, 1.0, 2.0).into(),
+            target: (0.0, 0.0, 0.0).into(),
+            up: cgmath::Vector3::unit_y(),
+            aspect: config.width as f32 / config.height as f32,
+            fovy: 45.0,
+            znear: 0.1,
+            zfar: 100.0
+        };
         
         Self {
             surface,
@@ -201,6 +206,7 @@ impl State {
             num_indices,
             diffuse_bind_group,
             diffuse_texture,
+            camera
         }
     }
 
