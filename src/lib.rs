@@ -1,12 +1,14 @@
+use vertex::Vertex;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder},
+    window::WindowBuilder,
 };
 
 use state::State;
 
 mod state;
+mod vertex;
 
 pub async fn run() {
     env_logger::init();
