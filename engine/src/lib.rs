@@ -9,12 +9,15 @@ use wasm_bindgen::prelude::*;
 
 use state::State;
 
+use cgmath::prelude::*;
+
 mod state;
 mod vertex;
 mod texture;
 mod camera;
 mod camera_uniform;
 mod camera_controller;
+mod instance;
 
 #[cfg_attr(target_arch="wasm32", wasm_bindgen(start))]
 pub async fn run() {
