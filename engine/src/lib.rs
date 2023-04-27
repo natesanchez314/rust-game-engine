@@ -12,12 +12,13 @@ use state::State;
 use cgmath::prelude::*;
 
 mod state;
-mod vertex;
+mod model;
 mod texture;
 mod camera;
 mod camera_uniform;
 mod camera_controller;
 mod instance;
+mod resources;
 
 #[cfg_attr(target_arch="wasm32", wasm_bindgen(start))]
 pub async fn run() {

@@ -4,7 +4,7 @@ use winit::{window::Window, event::WindowEvent};
 use bytemuck;
 use image::{self, GenericImageView};
 
-use crate::{vertex::Vertex, texture, camera::Camera, camera_uniform::{self, CameraUniform}, camera_controller::{CameraController, self}, instance::{Instance, self, InstanceRaw}, texture::Texture};
+use crate::{model::{ModelVertex, Vertex}, texture, camera::Camera, camera_uniform::{self, CameraUniform}, camera_controller::{CameraController, self}, instance::{Instance, self, InstanceRaw}, texture::Texture};
 
 pub struct State {
     surface: wgpu::Surface,
@@ -14,9 +14,6 @@ pub struct State {
     pub size: winit::dpi::PhysicalSize<u32>,
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
     diffuse_texture: texture::Texture,
     camera: Camera,
@@ -182,7 +179,7 @@ impl State {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[
-                    Vertex::desc(),
+                    ModelVertex::desc(),
                     InstanceRaw::desc(),
                 ],
             },
@@ -219,37 +216,6 @@ impl State {
             multiview: None,
         });
 
-        const VERTICES: &[Vertex] = &[
-            // Changed
-            Vertex { position: [-0.0868241, 0.49240386, 0.0], tex_coords: [0.4131759, 0.00759614], }, // A
-            Vertex { position: [-0.49513406, 0.06958647, 0.0], tex_coords: [0.0048659444, 0.43041354], }, // B
-            Vertex { position: [-0.21918549, -0.44939706, 0.0], tex_coords: [0.28081453, 0.949397], }, // C
-            Vertex { position: [0.35966998, -0.3473291, 0.0], tex_coords: [0.85967, 0.84732914], }, // D
-            Vertex { position: [0.44147372, 0.2347359, 0.0], tex_coords: [0.9414737, 0.2652641], }, // E
-        ];
-
-        const INDICES: &[u16] = &[
-            0, 1, 4,
-            1, 2, 4,
-            2, 3, 4,
-        ];
-
-
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-
-        //let num_vertices = VERTICES.len() as u32;
-        let num_indices = INDICES.len() as u32;
-
         let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
             (0..NUM_INSTANCES_PER_ROW).map(move |x| {
                 let position = cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
@@ -279,9 +245,6 @@ impl State {
             size,
             window,
             render_pipeline,
-            vertex_buffer,
-            index_buffer,
-            num_indices,
             diffuse_bind_group,
             diffuse_texture,
             camera,
@@ -354,10 +317,10 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            //render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+            //render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            //render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
