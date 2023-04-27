@@ -4,7 +4,7 @@ use winit::{window::Window, event::WindowEvent};
 use bytemuck;
 use image::{self, GenericImageView};
 
-use crate::{vertex::Vertex, texture, camera::Camera, camera_uniform::{self, CameraUniform}, camera_controller::{CameraController, self}, instance::{Instance, self, InstanceRaw}};
+use crate::{vertex::Vertex, texture, camera::Camera, camera_uniform::{self, CameraUniform}, camera_controller::{CameraController, self}, instance::{Instance, self, InstanceRaw}, texture::Texture};
 
 pub struct State {
     surface: wgpu::Surface,
@@ -26,6 +26,7 @@ pub struct State {
     camera_controller: CameraController,
     instances: Vec<instance::Instance>,
     instance_buffer: wgpu::Buffer,
+    depth_texture: Texture,
 }
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
@@ -163,6 +164,9 @@ impl State {
             label: Some("Camera bind group"),
         });
         let camera_controller = CameraController::new(0.2);
+
+        let depth_texture = texture::Texture::create_depth_texture(&device, &config, "Depth texture");
+
         let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render Pipeline Layout"),
             bind_group_layouts: &[
@@ -200,7 +204,13 @@ impl State {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: texture::Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -280,7 +290,8 @@ impl State {
             camera_bind_group,
             camera_controller,
             instances,
-            instance_buffer
+            instance_buffer,
+            depth_texture
         }
     }
 
@@ -295,6 +306,7 @@ impl State {
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
         }
+        self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config, "Depth Texture");
     }
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
@@ -329,7 +341,14 @@ impl State {
                         store: true 
                     },
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: true,
+                    }),
+                    stencil_ops: None,
+                }),
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
@@ -346,4 +365,19 @@ impl State {
 
         Ok(())
     }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum CompareFunction {
+    Undefined = 0,
+    Never = 1,
+    Less = 2,
+    Equal = 3,
+    LessEqual = 4,
+    Greater = 5,
+    NotEqual = 6,
+    GreaterEqual = 7,
+    Always = 8,
 }
