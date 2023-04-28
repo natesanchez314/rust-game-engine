@@ -4,7 +4,7 @@ use winit::{window::Window, event::WindowEvent};
 use bytemuck;
 use image::{self, GenericImageView};
 
-use crate::{model::{ModelVertex, Vertex}, texture, camera::Camera, camera_uniform::{self, CameraUniform}, camera_controller::{CameraController, self}, instance::{Instance, self, InstanceRaw}, texture::Texture};
+use crate::{model::{ModelVertex, Vertex, DrawModel, Model, self}, texture, camera::Camera, camera_uniform::{self, CameraUniform}, camera_controller::{CameraController, self}, instance::{Instance, self, InstanceRaw}, texture::Texture, resources};
 
 pub struct State {
     surface: wgpu::Surface,
@@ -24,6 +24,7 @@ pub struct State {
     instances: Vec<instance::Instance>,
     instance_buffer: wgpu::Buffer,
     depth_texture: Texture,
+    obj_model: Model
 }
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
@@ -216,9 +217,17 @@ impl State {
             multiview: None,
         });
 
+        let obj_model = resources::load_model("cube.obj", &device, &queue, &texture_bind_group_layout)
+            .await
+            .unwrap();
+
+        const SPACE_BETWEEN: f32 = 3.0;
         let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
             (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                let position = cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
+                let x = SPACE_BETWEEN * (x as f32 - NUM_INSTANCES_PER_ROW as f32 / 2.0);
+                let z = SPACE_BETWEEN * (z as f32 - NUM_INSTANCES_PER_ROW as f32 / 2.0);
+
+                let position = cgmath::Vector3 { x: x, y: 0.0, z: z };
                 let rotation = if position.is_zero() {
                     cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0))
                 } else {
@@ -254,7 +263,8 @@ impl State {
             camera_controller,
             instances,
             instance_buffer,
-            depth_texture
+            depth_texture,
+            obj_model
         }
     }
 
@@ -321,6 +331,11 @@ impl State {
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             //render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             //render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+
+            use model::DrawModel;
+            let mesh = &self.obj_model.meshes[0];
+            let material = &self.obj_model.materials[mesh.material];
+            render_pass.draw_mesh_instanced(mesh, material, 0..self.instances.len() as u32, &self.camera_bind_group);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
