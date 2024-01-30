@@ -12,7 +12,7 @@ pub struct Mat4 {
     m8: f32,
     m9: f32,
     m10: f32,
-    m11 f32,
+    m11: f32,
     
     m12: f32,
     m13: f32,

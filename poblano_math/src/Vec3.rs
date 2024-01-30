@@ -20,9 +20,9 @@ impl Vec3 {
         self.z /= mag;
     }
 
-    pub fn get_norm(&self) -> Self {
+    /*pub fn get_norm(&self) -> Self {
         Self { 0.0, 0.0, 0.0 }
-    }
+    }*/
 
     pub fn get_mag(&self) -> f32 {
         // Todo!()
@@ -45,6 +45,6 @@ impl Vec3 {
     }
 }
 
-impl ops::Mul<Mat3> for Vec3 {
-    fn mul 
-}
+/*impl ops::Mul<Mat3> for Vec3 {
+    todo
+}*/
