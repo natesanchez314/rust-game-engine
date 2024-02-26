@@ -10,7 +10,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 use cgmath::prelude::*;
-use model::Vertex;
+use model::*;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
@@ -21,7 +21,6 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 );
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
-const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(NUM_INSTANCES_PER_ROW as f32 * 0.5, 0.0, NUM_INSTANCES_PER_ROW as f32 * 0.5);
 
 struct Camera {
     eye: cgmath::Point3<f32>,
@@ -203,8 +202,6 @@ struct State {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
-    diffuse_bind_group: wgpu::BindGroup,
-    diffuse_texture: texture::Texture,
     camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
@@ -278,8 +275,6 @@ impl State {
         };
 
         surface.configure(&device, &config);
-        let diffuse_bytes = include_bytes!("../res/happy-tree.png");
-        let diffuse_texture = texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "../res/happy-tree.png").unwrap();
 
         let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
@@ -302,23 +297,6 @@ impl State {
             ],
             label: Some("texture_bind_group_layout"),
         });
-
-        let diffuse_bind_group = device.create_bind_group(
-            &wgpu::BindGroupDescriptor {
-                layout: &texture_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-                    }
-                ],
-                label: Some("diffuse_bind_group"),
-            }
-        );
 
         let camera = Camera {
             eye: (0.0, 1.0, 2.0).into(),
@@ -473,8 +451,6 @@ impl State {
             config,
             size,
             render_pipeline,
-            diffuse_bind_group,
-            diffuse_texture,
             camera,
             camera_uniform,
             camera_buffer,
@@ -549,11 +525,7 @@ impl State {
 
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-
-            use model::DrawModel;
-            render_pass.draw_mesh_instanced(&self.obj_model.meshes[0], 0..self.instances.len() as u32);
+            render_pass.draw_model_instanced(&self.obj_model, 0..self.instances.len() as u32, &self.camera_bind_group);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
