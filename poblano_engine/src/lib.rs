@@ -2,9 +2,11 @@ mod camera;
 mod texture;
 mod model;
 mod resources;
-mod ecs;
-
-use std::{os::unix::process, primitive};
+mod scene;
+mod entity;
+mod component;
+mod component_manager;
+mod hdr;
 
 use camera::{Camera3d, CameraController, CameraUniform, Projection};
 use texture::Texture;
@@ -16,10 +18,6 @@ use winit::{
 };
 use cgmath::prelude::*;
 use model::*;
-//use ecs::entity::Entity;
-//use ecs::component::model_component::ModelComponent;
-
-//use crate::ecs::{component::model_component, entity};
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 
@@ -125,6 +123,7 @@ struct State {
     light_bind_group: wgpu::BindGroup,
     light_render_pipeline: wgpu::RenderPipeline,
     mouse_pressed: bool,
+    hdr: hdr::HdrPipeline,
 
     //ECS 
     //entities: Vec<Entity>,
@@ -329,6 +328,7 @@ impl State {
                 config.format,
                 Some(texture::Texture::DEPTH_FORMAT),
                 &[model::ModelVertex::desc(), InstanceRaw::desc()],
+                wgpu::PrimitiveTopology::TriangleList,
                 shader,
             )
         };
@@ -349,6 +349,7 @@ impl State {
                 config.format,
                 Some(texture::Texture::DEPTH_FORMAT),
                 &[model::ModelVertex::desc()],
+                wgpu::PrimitiveTopology::TriangleList,
                 shader,
             )
         };
@@ -385,12 +386,7 @@ impl State {
             }
         );
 
-        //let mut entities = Vec::new();
-        //let mut model_components = Vec::new();
-
-        //let entity1 = Entity{id: 1};
-        //entities.push(entity1);
-        //let model = 
+        let hdr = hdr::HdrPipeline::new(&device, &config);
 
         Self {
             window,
@@ -416,8 +412,7 @@ impl State {
             light_bind_group,
             light_render_pipeline,
             mouse_pressed: false,
-            //entities,
-            //model_components,
+            hdr,
         }
     }
 
@@ -431,6 +426,7 @@ impl State {
         color_format: wgpu::TextureFormat,
         depth_format: Option<wgpu::TextureFormat>,
         vertex_layouts: &[wgpu::VertexBufferLayout],
+        topology: wgpu::PrimitiveTopology,
         shader:  wgpu::ShaderModuleDescriptor,
     ) -> wgpu::RenderPipeline {
         let shader = device.create_shader_module(shader);
@@ -455,7 +451,7 @@ impl State {
                 })],
             }),
             primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
+                topology,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
@@ -487,6 +483,7 @@ impl State {
             self.surface.configure(&self.device, &self.config);
             self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
             self.projection.resize(new_size.width, new_size.height);
+            self.hdr.resize(&self.device, new_size.width, new_size.height)
         }
     }
 
@@ -538,7 +535,8 @@ impl State {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    //view: &view,
+                    view: self.hdr.view(),
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -565,7 +563,6 @@ impl State {
 
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             
-            use crate::model::DrawLight;
             render_pass.set_pipeline(&self.light_render_pipeline);
             render_pass.draw_light_model(
                 &self.obj_model, 
@@ -581,6 +578,8 @@ impl State {
             );
             //render_system.render();
         }
+
+        self.hdr.process(&mut encoder, &view);
 
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
