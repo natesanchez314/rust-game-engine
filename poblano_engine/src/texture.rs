@@ -56,7 +56,7 @@ impl Texture {
         width: u32,
         height: u32,
         format: wgpu::TextureFormat,
-        config: wgpu::TextureUsages, 
+        usage: wgpu::TextureUsages, 
         filter_mode: wgpu::FilterMode,
         label: Option<&str>
     ) -> Self {
@@ -66,13 +66,13 @@ impl Texture {
             depth_or_array_layers: 1,
         };
         let desc = wgpu::TextureDescriptor {
-            label: label,
+            label,
             size,
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: Self::DEPTH_FORMAT,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            format,
+            usage,
             view_formats: &[],
         };
         let texture = device.create_texture(&desc);
@@ -85,8 +85,8 @@ impl Texture {
                 address_mode_w: wgpu::AddressMode::ClampToEdge,
                 mag_filter: wgpu::FilterMode::Linear,
                 min_filter: wgpu::FilterMode::Linear,
-                mipmap_filter: wgpu::FilterMode::Nearest,
-                compare: Some(wgpu::CompareFunction::LessEqual),
+                mipmap_filter: filter_mode,
+                compare: None,
                 lod_min_clamp: 0.0,
                 lod_max_clamp: 100.0,
                 ..Default::default()
