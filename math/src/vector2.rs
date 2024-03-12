@@ -41,11 +41,14 @@ impl Vector2 {
         (self.x * self.x) + (self.y * self.y)
     }
 
-    pub fn dot(&self) -> f32 {
-        1.0
+    pub fn dot(&self, rhs: &Vector2) -> f32 {
+        self.x * rhs.x + self.y * rhs.y
     }
 
-    pub fn getAngle(&self) -> f32 {
-        1.0
+    pub fn getAngle(&self, rhs: &Vector2) -> f32 {
+        let dot = self.dot(rhs);
+        let magA = self.get_mag();
+        let magB = rhs.get_mag();
+        (dot / (magA * magB)).acos()
     }
 }
