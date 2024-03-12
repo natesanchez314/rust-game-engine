@@ -1,7 +1,7 @@
-mod vector2;
-mod vector3;
-mod vector4;
-mod mat3;
-mod mat4;
-mod quat;
-mod util;
+pub mod vector2;
+pub mod vector3;
+pub mod vector4;
+pub mod mat3;
+pub mod mat4;
+pub mod quat;
+pub mod util;

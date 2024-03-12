@@ -1,5 +1,5 @@
 [package]
-name = "poblano_engine"
+name = "pengine"
 version = "0.1.0"
 edition = "2021"
 
@@ -17,7 +17,7 @@ anyhow = "1.0"
 cgmath = "0.18"
 tobj = { version = "3.2.1", features = ["async"] }
 instant = "0.1"
-#poblano_math = { path = "../poblano_math" }
+pmath = { path = "../math" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", features = [

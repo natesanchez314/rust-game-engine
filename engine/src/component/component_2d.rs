@@ -1,8 +1,9 @@
-use cgmath::Vector2;
+//use cgmath::Vector2;
+use pmath::vector2::Vector2;
 
 pub struct Transform2d {
-    translation: Vector2<f32>,
-    scale: Vector2<f32>,
+    translation: Vector2,
+    scale: Vector2,
     rotation: f32,
 }
 

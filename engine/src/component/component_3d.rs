@@ -1,7 +1,7 @@
-use cgmath::Vector3;
+use pmath::vector3::Vector3;
 
 pub struct Transform3d {
-    translation: Vector3<f32>,
-    scale: Vector3<f32>,
-    rotation: Vector3<f32>,
+    translation: Vector3,
+    scale: Vector3,
+    rotation: Vector3,
 }

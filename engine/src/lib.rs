@@ -17,6 +17,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 use cgmath::prelude::*;
+use pmath::*;
 use model::*;
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
@@ -40,6 +41,7 @@ struct Instance {
 impl Instance {
     fn to_raw(&self) -> InstanceRaw {
         let model = cgmath::Matrix4::from_translation(self.position) * cgmath::Matrix4::from(self.rotation);
+        //let model = pmath::mat4::Mat4::from(value)
         InstanceRaw {
             model: model.into(),
             normal: cgmath::Matrix3::from(self.rotation).into(),
