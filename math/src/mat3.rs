@@ -1,13 +1,13 @@
 pub struct Mat3 {
-    m0: f32,
-    m1: f32,
-    m2: f32,
+    pub r0c0: f32,
+    pub r0c1: f32,
+    pub r0c2: f32,
     
-    m3: f32,
-    m4: f32,
-    m5: f32,
+    pub r1c0: f32,
+    pub r1c1: f32,
+    pub r1c2: f32,
     
-    m6: f32,
-    m7: f32,
-    m8: f32,
+    pub r2c0: f32,
+    pub r2c1: f32,
+    pub r2c2: f32,
 }

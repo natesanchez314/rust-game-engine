@@ -4,3 +4,4 @@ mod vector4;
 mod mat3;
 mod mat4;
 mod quat;
+mod util;
