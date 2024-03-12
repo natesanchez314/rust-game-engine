@@ -1,7 +1,8 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::{mat3::Mat3, mat4::Mat4, quat::Quat, util::{isEqual, MATH_TOLERANCE}, vector4::Vector4};
+use crate::{mat3::Mat3, mat4::Mat4, quat::Quat, util::{is_equal, MATH_TOLERANCE}, vector4::Vector4};
 
+#[derive(Clone, Copy)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -12,6 +13,10 @@ impl Vector3 {
 
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn zero() -> Self {
+        Self { x: 0.0, y: 0.0, z: 0.0 }
     }
 
     pub fn from_vec4(v: &Vector4) ->  Self {
@@ -60,23 +65,23 @@ impl Vector3 {
         }
     }
 
-    pub fn getAngle(&self, rhs: &Vector3) -> f32 {
+    pub fn get_angle(&self, rhs: &Vector3) -> f32 {
         let dot = self.dot(rhs);
-        let magA = self.get_mag();
-        let magB = rhs.get_mag();
-        (dot / (magA * magB)).acos()
+        let mag_a = self.get_mag();
+        let mag_b = rhs.get_mag();
+        (dot / (mag_a * mag_b)).acos()
     }
 
-    pub fn isEqual(&self, rhs: &Vector3, epsilon: f32) -> bool{
-        isEqual(self.x, rhs.x, epsilon) && 
-        isEqual(self.y, rhs.y, epsilon) && 
-        isEqual(self.z, rhs.z, epsilon)
+    pub fn is_equal(&self, rhs: &Vector3, epsilon: f32) -> bool{
+        is_equal(self.x, rhs.x, epsilon) && 
+        is_equal(self.y, rhs.y, epsilon) && 
+        is_equal(self.z, rhs.z, epsilon)
     }
 }
 
 impl PartialEq for Vector3 {
     fn eq(&self, rhs: &Self) -> bool{
-        self.isEqual(rhs, MATH_TOLERANCE)
+        self.is_equal(rhs, MATH_TOLERANCE)
     }
 }
 
@@ -154,6 +159,29 @@ impl MulAssign<f32> for Vector3 {
     }
 }
 
+impl Mul<Vector3> for f32 {
+    type Output = Vector3;
+    fn mul(self, rhs: Vector3) -> Vector3 {
+        Vector3 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
+    }
+}
+
+impl Mul<&Vector3> for f32 {
+    type Output = Vector3;
+    fn mul(self, rhs: &Vector3) -> Vector3 {
+        Vector3 {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
+    }
+}
+
+
 impl Mul<Mat3> for Vector3 {
     type Output = Self;
     fn mul(self, rhs: Mat3) -> Self {
@@ -187,24 +215,16 @@ impl Mul<Mat4> for Vector3 {
         }
     }
 }
-/*/
+
 impl Mul<Quat> for Vector3 {
     type Output = Vector3;
     fn mul(self, rhs: Quat) -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0, 
-            z: 0.0
-        }
+        rhs.lqcvq(&self)
     }
 }
 
 impl MulAssign<Quat> for Vector3 {
     fn mul_assign(&mut self, rhs: Quat) {
-        *self = Self {
-            x: 0.0,
-            y: 0.0, 
-            z: 0.0
-        }
+        *self = rhs.lqcvq(self)
     }
-}*/
+}

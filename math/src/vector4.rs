@@ -1,7 +1,8 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::{mat4::Mat4, util::{isEqual, MATH_TOLERANCE}};
+use crate::{mat4::Mat4, util::{is_equal, MATH_TOLERANCE}};
 
+#[derive(Clone, Copy)]
 pub struct Vector4 {
     pub x: f32,
     pub y: f32,
@@ -54,24 +55,24 @@ impl Vector4 {
         }
     }
 
-    pub fn getAngle(&self, rhs: &Vector4) -> f32 {
+    pub fn get_angle(&self, rhs: &Vector4) -> f32 {
         let dot = self.dot(rhs);
-        let magA = self.get_mag();
-        let magB = rhs.get_mag();
-        (dot / (magA * magB)).acos()
+        let mag_a = self.get_mag();
+        let mag_b = rhs.get_mag();
+        (dot / (mag_a * mag_b)).acos()
     }
 
-    pub fn isEqual(&self, rhs: &Vector4, epsilon: f32) -> bool{
-        isEqual(self.x, rhs.x, epsilon) && 
-        isEqual(self.y, rhs.y, epsilon) && 
-        isEqual(self.z, rhs.z, epsilon) &&
-        isEqual(self.w, rhs.w, epsilon)
+    pub fn is_equal(&self, rhs: &Vector4, epsilon: f32) -> bool{
+        is_equal(self.x, rhs.x, epsilon) && 
+        is_equal(self.y, rhs.y, epsilon) && 
+        is_equal(self.z, rhs.z, epsilon) &&
+        is_equal(self.w, rhs.w, epsilon)
     }
 }
 
 impl PartialEq for Vector4 {
     fn eq(&self, rhs: &Self) -> bool{
-        self.isEqual(rhs, MATH_TOLERANCE)
+        self.is_equal(rhs, MATH_TOLERANCE)
     }
 }
 

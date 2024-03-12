@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 pub struct Mat3 {
     pub r0c0: f32,
     pub r0c1: f32,

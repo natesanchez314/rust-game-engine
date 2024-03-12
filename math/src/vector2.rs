@@ -1,6 +1,7 @@
 use crate::vector3::Vector3;
 use crate::vector4::Vector4;
 
+#[derive(Clone, Copy)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32
@@ -45,10 +46,10 @@ impl Vector2 {
         self.x * rhs.x + self.y * rhs.y
     }
 
-    pub fn getAngle(&self, rhs: &Vector2) -> f32 {
+    pub fn get_angle(&self, rhs: &Vector2) -> f32 {
         let dot = self.dot(rhs);
-        let magA = self.get_mag();
-        let magB = rhs.get_mag();
-        (dot / (magA * magB)).acos()
+        let mag_a = self.get_mag();
+        let mag_b = rhs.get_mag();
+        (dot / (mag_a * mag_b)).acos()
     }
 }
