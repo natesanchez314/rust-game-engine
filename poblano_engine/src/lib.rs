@@ -20,6 +20,8 @@ use cgmath::prelude::*;
 use model::*;
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
+const RES: &str = "../res";
+const SHADERS: &str = "../shaders";
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -580,7 +582,7 @@ pub async fn run() {
                     Ok(_) => {}
                     Err(wgpu::SurfaceError::Lost) => state.resize(state.size),
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                    Err(e) => eprintln!("{:?}", e),
+                    Err(e) => eprintln!(" Test {:?}\n", e),
                 }
             }
             Event::MainEventsCleared => {

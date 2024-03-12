@@ -1,6 +1,6 @@
-mod vec2;
-//mod vec3;
-mod vec4;
-//mod mat3;
-//mod mat4;
+mod vector2;
+mod vector3;
+mod vector4;
+mod mat3;
+mod mat4;
 mod quat;
