@@ -3,9 +3,7 @@ mod texture;
 mod model;
 mod resources;
 mod scene;
-mod entity;
-mod component;
-mod component_manager;
+mod ecs;
 //mod hdr;
 
 use camera::{Camera3d, CameraController, CameraUniform, Projection};

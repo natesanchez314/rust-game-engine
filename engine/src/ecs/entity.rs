@@ -1,6 +1,6 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use crate::component::Component;
+use crate::ecs::component::Component;
 
 pub struct Entity {
     pub id: u32

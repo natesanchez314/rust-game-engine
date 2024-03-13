@@ -1,5 +1,5 @@
 use crate::camera::{Camera2d, Camera3d};
-use crate::entity::Entity;
+use crate::ecs::entity::Entity;
 
 pub trait Scene {
     fn update(delta: f32);
