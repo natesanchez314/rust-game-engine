@@ -7,6 +7,7 @@ mod ecs;
 //mod hdr;
 
 use camera::{Camera3d, CameraController, CameraUniform, Projection};
+use ecs::entity_manager::EntityManager;
 use texture::Texture;
 use wgpu::util::DeviceExt;
 use winit::{
@@ -19,8 +20,7 @@ use pmath::*;
 use model::*;
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
-const RES: &str = "../res";
-const SHADERS: &str = "../shaders";
+const MAX_ENTITIES: u32 = 1000;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -128,6 +128,7 @@ struct State {
     //hdr: hdr::HdrPipeline,
 
     //ECS 
+    //entity_manager: EntityManager,
     //entities: Vec<Entity>,
     //transform_components: Vec<Transform2d>
     //model_components: Vec<ModelComponent>,
@@ -358,6 +359,8 @@ impl State {
 
         let obj_model = resources::load_model("cube.obj", &device, &queue, &texture_bind_group_layout).await.unwrap();
         const SPACE_BETWEEN: f32 = 3.0;
+
+        //let entity_manager = EntityManager::new(MAX_ENTITIES);
 
         let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
             (0..NUM_INSTANCES_PER_ROW).map(move |x| {
