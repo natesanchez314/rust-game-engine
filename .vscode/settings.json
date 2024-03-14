@@ -3,7 +3,6 @@
         "**/target": true
     },
     "rust-analyzer.linkedProjects": [
-        "./engine/Cargo.toml",
-        "./math/Cargo.toml"
+        "./Cargo.toml"
     ]
 }
