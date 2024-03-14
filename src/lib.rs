@@ -16,7 +16,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 use cgmath::prelude::*;
-use pmath::*;
+//use pmath::*;
 use model::*;
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
