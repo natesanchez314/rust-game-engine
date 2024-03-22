@@ -1,3 +1,4 @@
+mod game;
 mod camera;
 mod texture;
 mod model;
@@ -6,10 +7,11 @@ mod scene;
 mod ecs;
 mod my_window;
 mod device;
-//mod pipeline;
+mod command;
+mod pipeline;
 
-use camera::{Camera3d, CameraController, CameraUniform, Projection};
-use ecs::entity_manager::EntityManager;
+use camera::{camera3d::{Camera3d, Camera3dController}, CameraUniform, Projection};
+use ecs::{component::component_3d::Transform3d, entity_manager::EntityManager};
 use my_window::MyWindow;
 //use pipeline::Pipeline;
 use texture::Texture;
@@ -20,7 +22,7 @@ use winit::{
 use cgmath::prelude::*;
 use model::*;
 
-use crate::device::Device;
+use crate::{device::Device, ecs::component::{Component, InstanceRaw}};
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const MAX_ENTITIES: u32 = 1000;
@@ -34,76 +36,6 @@ struct LightUniform {
     _padding2: u32,
 }
 
-struct Instance {
-    position: cgmath::Vector3<f32>,
-    rotation: cgmath::Quaternion<f32>,
-}
-
-impl Instance {
-    fn to_raw(&self) -> InstanceRaw {
-        let model = cgmath::Matrix4::from_translation(self.position) * cgmath::Matrix4::from(self.rotation);
-        //let model = pmath::mat4::Mat4::from(value)
-        InstanceRaw {
-            model: model.into(),
-            normal: cgmath::Matrix3::from(self.rotation).into(),
-        }
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-#[allow(dead_code)]
-struct InstanceRaw {
-    model: [[f32; 4]; 4],
-    normal: [[f32; 3]; 3],
-}
-
-impl model::Vertex for InstanceRaw {
-    fn desc() -> wgpu::VertexBufferLayout<'static> {
-        use std::mem;
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 5,
-                    format: wgpu::VertexFormat::Float32x4,
-                },wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
-                    shader_location: 6,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
-                    shader_location: 7,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
-                    shader_location: 8,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 16]>() as wgpu::BufferAddress,
-                    shader_location: 9,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 19]>() as wgpu::BufferAddress,
-                    shader_location: 10,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 22]>() as wgpu::BufferAddress,
-                    shader_location: 11,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-            ]
-        }
-    }
-}
-
 struct State {
     window: MyWindow,
     device: Device,
@@ -115,8 +47,8 @@ struct State {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    camera_controller: CameraController,
-    instances: Vec<Instance>,
+    camera_controller: Camera3dController,
+    transform3ds: Vec<Transform3d>,
     instance_buffer: wgpu::Buffer,
     depth_texture: Texture,
     obj_model: model::Model,
@@ -199,7 +131,7 @@ impl State {
 
         let camera = Camera3d::new((0.0, 5.0, 10.0), cgmath::Deg(-90.0), cgmath::Deg(-20.0));
         let projection = camera::Projection::new(config.width, config.height, cgmath::Deg(45.0), 0.1, 100.0);
-        let camera_controller = camera::CameraController::new(4.0, 0.4);
+        let camera_controller = camera::camera3d::Camera3dController::new(4.0, 0.4);
 
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera, &projection);
@@ -296,7 +228,7 @@ impl State {
                 label: Some("Normal Shader"),
                 source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/shader.wgsl").into()),
             };
-            create_render_pipeline(
+            pipeline::create_render_pipeline(
                 &device.device,
                 &render_pipeline_layout,
                 config.format,
@@ -333,7 +265,7 @@ impl State {
                 label: Some("Light Shader"),
                 source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/light.wgsl").into()),
             };
-            create_render_pipeline(
+            pipeline::create_render_pipeline(
                 &device.device,
                 &layout,
                 config.format,
@@ -347,24 +279,22 @@ impl State {
         let obj_model = resources::load_model("cube.obj", &device.device, &device.queue, &texture_bind_group_layout).await.unwrap();
         const SPACE_BETWEEN: f32 = 3.0;
 
-        //let entity_manager = EntityManager::new(MAX_ENTITIES);
-
         let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
             (0..NUM_INSTANCES_PER_ROW).map(move |x| {
                 let x = SPACE_BETWEEN * (x as f32 - NUM_INSTANCES_PER_ROW as f32 / 2.0);
                 let z = SPACE_BETWEEN * (z as f32 - NUM_INSTANCES_PER_ROW as f32 / 2.0);
         
-                let position = cgmath::Vector3 { x, y: 0.0, z };
-        
+                let translation = cgmath::Vector3 { x, y: 0.0, z };
+                let scale = cgmath::Vector3 { x: 1.0, y: 1.0, z: 1.0 };
                 let rotation = cgmath::Quaternion::from_axis_angle((0.0, 1.0, 0.0).into(), cgmath::Deg(100.0));
         
-                Instance {
-                    position, rotation,
+                Transform3d {
+                    translation, scale, rotation,
                 }
             })
         }).collect::<Vec<_>>();
 
-        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+        let instance_data = instances.iter().map(Transform3d::to_raw).collect::<Vec<_>>();
         let instance_buffer = device.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
@@ -385,7 +315,7 @@ impl State {
             camera_buffer,
             camera_bind_group,
             camera_controller,
-            instances,
+            transform3ds: instances,
             instance_buffer,
             depth_texture,
             obj_model,
@@ -462,7 +392,6 @@ impl State {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
-                    //view: self.hdr.view(),
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -498,7 +427,7 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.draw_model_instanced(
                 &self.obj_model,
-                0..self.instances.len() as u32, 
+                0..self.transform3ds.len() as u32, 
                 &self.camera_bind_group, 
                 &self.light_bind_group
             );
@@ -514,7 +443,6 @@ impl State {
 pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new();
-    //let window = WindowBuilder::new().build(&event_loop).unwrap();
     let window = MyWindow::new(800, 600, "wgpu engine", &event_loop);
     let mut state = State::new(window).await;
     let mut last_render_time = instant::Instant::now();
@@ -570,59 +498,4 @@ pub async fn run() {
             _ => {}
         }
     });
-}
-
-fn create_render_pipeline(
-    device: &wgpu::Device,
-    layout: &wgpu::PipelineLayout,
-    color_format: wgpu::TextureFormat,
-    depth_format: Option<wgpu::TextureFormat>,
-    vertex_layouts: &[wgpu::VertexBufferLayout],
-    topology: wgpu::PrimitiveTopology,
-    shader:  wgpu::ShaderModuleDescriptor,
-) -> wgpu::RenderPipeline {
-    let shader = device.create_shader_module(shader);
-    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some("Render Pipeline"),
-        layout: Some(layout),
-        vertex: wgpu::VertexState {
-            module: &shader,
-            entry_point: "vs_main",
-            buffers: vertex_layouts,
-        },
-        fragment: Some(wgpu::FragmentState {
-            module: &shader,
-            entry_point: "fs_main",
-            targets: &[Some(wgpu::ColorTargetState {
-                format: color_format,
-                blend: Some(wgpu::BlendState {
-                    alpha: wgpu::BlendComponent::REPLACE,
-                    color: wgpu::BlendComponent::REPLACE,
-                }),
-                write_mask: wgpu::ColorWrites::ALL,
-            })],
-        }),
-        primitive: wgpu::PrimitiveState {
-            topology,
-            strip_index_format: None,
-            front_face: wgpu::FrontFace::Ccw,
-            cull_mode: Some(wgpu::Face::Back),
-            polygon_mode: wgpu::PolygonMode::Fill,
-            unclipped_depth: false,
-            conservative: false,
-        },
-        depth_stencil: depth_format.map(|format| wgpu::DepthStencilState {
-            format,
-            depth_write_enabled: true,
-            depth_compare: wgpu::CompareFunction::Less,
-            stencil: wgpu::StencilState::default(),
-            bias: wgpu::DepthBiasState::default(),
-        }),
-        multisample: wgpu::MultisampleState {
-            count: 1,
-            mask: !0,
-            alpha_to_coverage_enabled: false,
-        },
-        multiview: None,
-    })
 }
