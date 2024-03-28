@@ -2,41 +2,6 @@ use wgpu::util::DeviceExt;
 
 use crate::device::Device;
 
-// struct Pipeline {
-//     layout: wgpu::PipelineLayout,
-//     pipeline: wgpu::RenderPipeline,
-// }
-
-// impl Pipeline {
-//     pub fn new(
-//         device: &Device, 
-//         layout_descriptor: wgpu::PipelineLayoutDescriptor, 
-//         shader_path: wgpu::ShaderModuleDescriptor,
-//         //bind_group_layouts: &[&wgpu::BindGroupLayout],
-//     ) -> Self {
-//         // let layout = device.create_pipeline_layout(
-//         //     &wgpu::PipelineLayoutDescriptor {
-//         //         label: Some("Render Pipeline Layout"),
-//         //         bind_group_layouts: bind_group_layouts,
-//         //         push_constant_ranges: &[],
-//         //     }
-//         // );
-//         let pipeline = create_render_pipeline(
-//             &device.device,
-//             &layout,
-//             config.format,
-//             Some(texture::Texture::DEPTH_FORMAT),
-//             &[model::ModelVertex::desc(), InstanceRaw::desc()],
-//             wgpu::PrimitiveTopology::TriangleList,
-//             shader,
-//         );
-//         Self {
-//             layout: layout,
-//             pipeline: pipeline,
-//         }
-//     }
-// }
-
 pub fn create_render_pipeline(
     device: &wgpu::Device,
     layout: &wgpu::PipelineLayout,

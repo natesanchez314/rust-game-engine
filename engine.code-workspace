@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "engine"
+		},
+		{
+			"path": "demos"
+		}
+	],
+	"settings": {
+		"rust-analyzer.linkedProjects": [
+			"./Cargo.toml"
+		]
+	}
+}
