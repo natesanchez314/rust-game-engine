@@ -14,6 +14,7 @@ pub struct InstanceRaw {
 
 
 pub trait Component {
+    // fn update(&mut self, delta: f32);
     fn add_to_entity(&self, entity_id: u32);
     fn to_raw(&self) -> InstanceRaw;
 }
