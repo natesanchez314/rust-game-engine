@@ -1,13 +1,5 @@
-use capy::run;
-
-struct SandboxApp {
-
-}
-
-impl App for SandboxApp {
-    
-}
+use capy::app::App;
 
 fn main() {
-    pollster::block_on(run());
+    App::new().run();
 }

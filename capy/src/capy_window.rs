@@ -1,7 +1,7 @@
 use wgpu::{Adapter, Instance, Surface};
 use winit::{event_loop::EventLoop, window::{Window, WindowBuilder}};
 
-pub struct MyWindow {
+pub struct CapyWindow {
     pub width: u32,
     pub height: u32,
     frame_buffer_resized: bool,
@@ -9,7 +9,7 @@ pub struct MyWindow {
     pub window: Window,
 }
 
-impl MyWindow {
+impl CapyWindow {
     pub fn new(w: u32, h: u32, name: &str, event_loop: &EventLoop<()>) -> Self {
         let window = WindowBuilder::new().build(event_loop).unwrap();
         Self {
